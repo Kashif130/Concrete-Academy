@@ -24,6 +24,7 @@
     <nav class="header-nav">
       <span class="nav-item" data-nav="home">Cover Sheet</span>
       <span class="nav-item" data-nav="lessons">Drawings</span>
+      <span class="nav-item" data-nav="tools">Tools</span>
       <span class="nav-item" data-nav="news">Updates</span>
       <span class="nav-item" data-nav="live">Live Data</span>
       <span class="nav-item" data-nav="glossary">Glossary</span>
@@ -39,6 +40,7 @@
     <p class="hero-lede">Ten drawings covering the vaults, the stack, custody and roles, the risk engine, the points system, the institutional pivot and the funding trail — plus live protocol data, live official X feeds, and a full glossary — written by a community member so the next person doesn't have to piece it together from threads and airdrop guides.</p>
     <div class="hero-actions">
       <button class="btn btn-primary" data-nav="lessons">Open the drawings</button>
+      <button class="btn btn-ghost" data-nav="tools">Try the toolkit</button>
       <button class="btn btn-ghost" data-nav="live">See live data</button>
       <button class="btn btn-ghost" data-nav="news">See official updates</button>
     </div>
@@ -144,6 +146,11 @@
       <div class="tier-points" id="tier-points">0 / 180 marks</div>
     </div>
     <ul class="tier-ladder" id="tier-ladder"></ul>
+  </div>
+
+  <div class="badges-wrap">
+    <div class="section-eyebrow">CITATIONS EARNED</div>
+    <div class="badges-grid" id="badges-grid"></div>
   </div>
 
   <div class="log-table-wrap">
@@ -267,6 +274,117 @@
     <p class="section-sub">Bookmark these. Anything asking for a wallet seed phrase or private key is never one of them.</p>
   </section>
   <div class="link-grid" id="link-grid"></div>
+</main>
+
+<main id="view-tools" class="view view-hidden">
+  <section class="section-head">
+    <div class="section-eyebrow">TOOLKIT</div>
+    <h2>Site tools</h2>
+    <p class="section-sub">Three unofficial, hand-built tools that riff on Concrete's own products — points.concrete.xyz, app.concrete.xyz, and the Blueprint Finance funding trail. Nothing here reads or writes your real wallet, points, or Bags.</p>
+  </section>
+  <div class="tool-hub-grid">
+    <div class="tool-hub-card" data-nav="tool-points">
+      <div class="tool-hub-tag">points.concrete.xyz</div>
+      <h3>Bags Estimator</h3>
+      <p>Play with deposit size, hold time and referrals to see how a points program like this typically shapes accrual — for intuition, not prediction.</p>
+      <span class="tool-hub-open">Open the estimator &rarr;</span>
+    </div>
+    <div class="tool-hub-card" data-nav="tool-vaults">
+      <div class="tool-hub-tag">app.concrete.xyz</div>
+      <h3>Vault Explorer</h3>
+      <p>Compare Concrete's vaults side by side — custody, withdrawal mechanics, and what each one is actually built to hold.</p>
+      <span class="tool-hub-open">Open the explorer &rarr;</span>
+    </div>
+    <div class="tool-hub-card" data-nav="tool-funding">
+      <div class="tool-hub-tag">Blueprint Finance</div>
+      <h3>Funding Trail</h3>
+      <p>Every disclosed round since the 2022 founding, charted, with lead investors and what's still undisclosed.</p>
+      <span class="tool-hub-open">Open the funding trail &rarr;</span>
+    </div>
+  </div>
+</main>
+
+<main id="view-tool-points" class="view view-hidden">
+  <div class="lesson-detail-wrap">
+    <button class="back-link" data-nav="tools">&larr; Back to toolkit</button>
+    <section class="section-head">
+      <div class="section-eyebrow">points.concrete.xyz · UNOFFICIAL TOOL</div>
+      <h2>Bags Estimator</h2>
+      <p class="section-sub">Concrete hasn't published its real points formula, so this can't tell you what you'll actually earn. What it can do is show how deposit-weighted, time-weighted points programs generally behave — move the sliders and watch the shape of it.</p>
+    </section>
+
+    <div class="estimator-panel">
+      <div class="estimator-controls">
+        <label class="estimator-field">
+          <span class="estimator-label">Deposit size <b id="pe-amount-out">$5,000</b></span>
+          <input type="range" id="pe-amount" min="100" max="250000" step="100" value="5000">
+        </label>
+        <label class="estimator-field">
+          <span class="estimator-label">Vault type</span>
+          <select id="pe-vault" class="estimator-select"></select>
+        </label>
+        <label class="estimator-field">
+          <span class="estimator-label">Days held <b id="pe-days-out">30 days</b></span>
+          <input type="range" id="pe-days" min="1" max="180" step="1" value="30">
+        </label>
+        <label class="estimator-field">
+          <span class="estimator-label">Referrals brought in <b id="pe-referrals-out">0</b></span>
+          <input type="range" id="pe-referrals" min="0" max="20" step="1" value="0">
+        </label>
+        <label class="estimator-check">
+          <input type="checkbox" id="pe-social">
+          <span>Completed the social/community task set</span>
+        </label>
+      </div>
+      <div class="estimator-result">
+        <div class="estimator-result-label">Illustrative Bags after this period</div>
+        <div class="estimator-result-value" id="pe-total">0</div>
+        <div class="estimator-breakdown" id="pe-breakdown"></div>
+      </div>
+    </div>
+
+    <div class="live-footnote">
+      <p>This simulator uses a made-up formula built for teaching, not Concrete's real one — no such formula is public. It never touches your wallet or an actual Bags balance. Check your real standing at <span class="mono-inline">points.concrete.xyz</span>.</p>
+    </div>
+  </div>
+</main>
+
+<main id="view-tool-vaults" class="view view-hidden">
+  <div class="lesson-detail-wrap">
+    <button class="back-link" data-nav="tools">&larr; Back to toolkit</button>
+    <section class="section-head">
+      <div class="section-eyebrow">app.concrete.xyz · UNOFFICIAL TOOL</div>
+      <h2>Vault Explorer</h2>
+      <p class="section-sub">A side-by-side reference for Concrete's vault lineup, built from the drawings and public docs. Rates and availability change — always confirm on the app before depositing.</p>
+    </section>
+    <div id="vault-filter-bar" class="filter-bar" role="tablist" aria-label="Filter vaults by category"></div>
+    <div id="vault-grid" class="vault-grid"></div>
+    <div class="live-actions" style="justify-content:center;">
+      <a class="btn btn-primary" href="https://app.concrete.xyz/earn" target="_blank" rel="noopener noreferrer">Open app.concrete.xyz/earn</a>
+    </div>
+  </div>
+</main>
+
+<main id="view-tool-funding" class="view view-hidden">
+  <div class="lesson-detail-wrap">
+    <button class="back-link" data-nav="tools">&larr; Back to toolkit</button>
+    <section class="section-head">
+      <div class="section-eyebrow">Blueprint Finance · UNOFFICIAL TOOL</div>
+      <h2>Funding Trail</h2>
+      <p class="section-sub">Every disclosed and undisclosed round since Blueprint Finance's 2022 founding, hand-verified against public announcements.</p>
+    </section>
+
+    <div class="funding-stats" id="funding-stats"></div>
+    <div class="funding-chart-card">
+      <div class="live-card-label">Disclosed round sizes</div>
+      <div id="funding-chart" class="funding-chart"></div>
+    </div>
+    <div id="funding-round-list" class="funding-round-list"></div>
+
+    <div class="live-footnote">
+      <p>Amounts and investor lists come from Concrete's own announcements and reputable coverage at the time. Two of the four rounds above never had a size disclosed — shown as such rather than guessed. Verify anything current at <span class="mono-inline">blueprintfinance.com</span> or <span class="mono-inline">concrete.xyz</span>.</p>
+    </div>
+  </div>
 </main>
 
 <footer class="site-footer">
