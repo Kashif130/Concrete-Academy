@@ -283,11 +283,23 @@
     <p class="section-sub">Three unofficial, hand-built tools that riff on Concrete's own products — points.concrete.xyz, app.concrete.xyz, and the Blueprint Finance funding trail. Nothing here reads or writes your real wallet, points, or Bags.</p>
   </section>
   <div class="tool-hub-grid">
-    <div class="tool-hub-card" data-nav="tool-points">
-      <div class="tool-hub-tag">points.concrete.xyz</div>
-      <h3>Bags Estimator</h3>
-      <p>Play with deposit size, hold time and referrals to see how a points program like this typically shapes accrual — for intuition, not prediction.</p>
-      <span class="tool-hub-open">Open the estimator &rarr;</span>
+    <div class="tool-hub-card" data-nav="tool-yield">
+      <div class="tool-hub-tag">app.concrete.xyz · LIVE DATA</div>
+      <h3>Vault Yield Calculator</h3>
+      <p>Enter a deposit, pick a real Concrete vault and a hold period, and see projected earnings using that vault's actual current APY — pulled live from DefiLlama, not a guess.</p>
+      <span class="tool-hub-open">Open the calculator &rarr;</span>
+    </div>
+    <div class="tool-hub-card" data-nav="tool-optimizer">
+      <div class="tool-hub-tag">app.concrete.xyz · LIVE DATA</div>
+      <h3>Vault Optimizer</h3>
+      <p>Same deposit, same hold period — ranked across every live Concrete vault so you can see which one currently pays the most.</p>
+      <span class="tool-hub-open">Open the optimizer &rarr;</span>
+    </div>
+    <div class="tool-hub-card" data-nav="tool-airdrop">
+      <div class="tool-hub-tag">$CT · HYPOTHETICAL</div>
+      <h3>Airdrop Allocation Checker</h3>
+      <p>Enter your Bags/points and model a hypothetical $CT airdrop against a fixed 1B max supply and an adjustable pool size.</p>
+      <span class="tool-hub-open">Open the checker &rarr;</span>
     </div>
     <div class="tool-hub-card" data-nav="tool-vaults">
       <div class="tool-hub-tag">app.concrete.xyz</div>
@@ -304,47 +316,114 @@
   </div>
 </main>
 
-<main id="view-tool-points" class="view view-hidden">
+<main id="view-tool-yield" class="view view-hidden">
   <div class="lesson-detail-wrap">
     <button class="back-link" data-nav="tools">&larr; Back to toolkit</button>
     <section class="section-head">
-      <div class="section-eyebrow">points.concrete.xyz · UNOFFICIAL TOOL</div>
-      <h2>Bags Estimator</h2>
-      <p class="section-sub">Concrete hasn't published its real points formula, so this can't tell you what you'll actually earn. What it can do is show how deposit-weighted, time-weighted points programs generally behave — move the sliders and watch the shape of it.</p>
+      <div class="section-eyebrow">app.concrete.xyz · LIVE VAULT DATA</div>
+      <h2>Vault Yield Calculator</h2>
+      <p class="section-sub">This reads Concrete's real, currently-live vault pools and their real APY straight from DefiLlama's public yields API (<span class="mono-inline">yields.llama.fi/pools</span>) every time you open it — the same free, keyless source the Live Data page already uses for TVL. No wallet is read; you type in a hypothetical deposit.</p>
+    </section>
+
+    <div id="yield-status" class="live-status">Fetching live Concrete vault data…</div>
+
+    <div class="estimator-panel">
+      <div class="estimator-controls">
+        <label class="estimator-field">
+          <span class="estimator-label">Deposit amount <b id="ye-amount-out">$5,000</b></span>
+          <input type="range" id="ye-amount" min="100" max="500000" step="100" value="5000">
+        </label>
+        <label class="estimator-field">
+          <span class="estimator-label">Vault (live APY)</span>
+          <select id="ye-vault" class="estimator-select"></select>
+        </label>
+        <label class="estimator-field">
+          <span class="estimator-label">Days held <b id="ye-days-out">30 days</b></span>
+          <input type="range" id="ye-days" min="1" max="365" step="1" value="30">
+        </label>
+      </div>
+      <div class="estimator-result">
+        <div class="estimator-result-label">Current APY on this vault</div>
+        <div class="estimator-result-value" id="ye-apy">—</div>
+        <div class="estimator-breakdown" id="ye-vault-meta"></div>
+      </div>
+    </div>
+
+    <div class="earnings-grid" id="ye-earnings-grid"></div>
+
+    <div class="live-footnote">
+      <p>APY is DefiLlama's current annualized figure for this pool — it moves with market conditions and is not a fixed promise. Earnings below assume the rate holds steady and compounds daily over the period chosen; actual results will differ. Vault TVL shown is that pool's, not Concrete's whole protocol. Always confirm live before depositing at <span class="mono-inline">app.concrete.xyz/earn</span>.</p>
+    </div>
+  </div>
+</main>
+
+<main id="view-tool-optimizer" class="view view-hidden">
+  <div class="lesson-detail-wrap">
+    <button class="back-link" data-nav="tools">&larr; Back to toolkit</button>
+    <section class="section-head">
+      <div class="section-eyebrow">app.concrete.xyz · LIVE VAULT DATA</div>
+      <h2>Vault Optimizer</h2>
+      <p class="section-sub">Same deposit and hold period, run against every live Concrete pool at once — ranked by current APY so the best-paying option (right now) is obvious.</p>
+    </section>
+
+    <div id="optimizer-status" class="live-status">Fetching live Concrete vault data…</div>
+
+    <div class="estimator-controls optimizer-controls">
+      <label class="estimator-field">
+        <span class="estimator-label">Deposit amount <b id="op-amount-out">$5,000</b></span>
+        <input type="range" id="op-amount" min="100" max="500000" step="100" value="5000">
+      </label>
+      <label class="estimator-field">
+        <span class="estimator-label">Days held <b id="op-days-out">30 days</b></span>
+        <input type="range" id="op-days" min="1" max="365" step="1" value="30">
+      </label>
+    </div>
+
+    <div id="optimizer-list" class="optimizer-list"></div>
+
+    <div class="live-footnote">
+      <p>Ranked purely on current APY from DefiLlama — it does not weigh custody model, withdrawal delay, or risk category (see the Vault Explorer for those). A higher APY vault is not automatically the "better" choice for you; check the underlying asset and lockup before moving funds.</p>
+    </div>
+  </div>
+</main>
+
+<main id="view-tool-airdrop" class="view view-hidden">
+  <div class="lesson-detail-wrap">
+    <button class="back-link" data-nav="tools">&larr; Back to toolkit</button>
+    <section class="section-head">
+      <div class="section-eyebrow">$CT · HYPOTHETICAL, UNOFFICIAL</div>
+      <h2>Airdrop Allocation Checker</h2>
+      <p class="section-sub">Concrete has <b>not</b> announced a token, ticker, snapshot, or airdrop date. "$CT" here is a placeholder used only to model scenarios. Every number below is a hypothetical simulation based on the assumptions you enter — not a claim, promise, or prediction of any real allocation.</p>
     </section>
 
     <div class="estimator-panel">
       <div class="estimator-controls">
         <label class="estimator-field">
-          <span class="estimator-label">Deposit size <b id="pe-amount-out">$5,000</b></span>
-          <input type="range" id="pe-amount" min="100" max="250000" step="100" value="5000">
+          <span class="estimator-label">Your Bags / points <b id="ad-mybags-out">10,000</b></span>
+          <input type="range" id="ad-mybags" min="0" max="200000" step="100" value="10000">
         </label>
         <label class="estimator-field">
-          <span class="estimator-label">Vault type</span>
-          <select id="pe-vault" class="estimator-select"></select>
+          <span class="estimator-label">Estimated total community Bags (your guess) <b id="ad-totalbags-out">50,000,000</b></span>
+          <input type="range" id="ad-totalbags" min="1000000" max="500000000" step="500000" value="50000000">
         </label>
         <label class="estimator-field">
-          <span class="estimator-label">Days held <b id="pe-days-out">30 days</b></span>
-          <input type="range" id="pe-days" min="1" max="180" step="1" value="30">
+          <span class="estimator-label">Airdrop pool size (% of max supply) <b id="ad-poolpct-out">7%</b></span>
+          <input type="range" id="ad-poolpct" min="1" max="25" step="0.5" value="7">
         </label>
-        <label class="estimator-field">
-          <span class="estimator-label">Referrals brought in <b id="pe-referrals-out">0</b></span>
-          <input type="range" id="pe-referrals" min="0" max="20" step="1" value="0">
-        </label>
-        <label class="estimator-check">
-          <input type="checkbox" id="pe-social">
-          <span>Completed the social/community task set</span>
-        </label>
+        <div class="estimator-field">
+          <span class="estimator-label">Hypothetical FDV (for a USD estimate)</span>
+          <div class="fdv-chip-row" id="ad-fdv-chips"></div>
+        </div>
       </div>
       <div class="estimator-result">
-        <div class="estimator-result-label">Illustrative Bags after this period</div>
-        <div class="estimator-result-value" id="pe-total">0</div>
-        <div class="estimator-breakdown" id="pe-breakdown"></div>
+        <div class="estimator-result-label">Max token supply (fixed)</div>
+        <div class="estimator-result-value" id="ad-maxsupply">1,000,000,000 $CT</div>
+        <div class="estimator-breakdown" id="ad-breakdown"></div>
       </div>
     </div>
 
     <div class="live-footnote">
-      <p>This simulator uses a made-up formula built for teaching, not Concrete's real one — no such formula is public. It never touches your wallet or an actual Bags balance. Check your real standing at <span class="mono-inline">points.concrete.xyz</span>.</p>
+      <p>Formula: airdrop pool = 1,000,000,000 &times; pool%. Your share = your Bags &divide; estimated total community Bags. Your tokens = airdrop pool &times; your share. The "estimated total community Bags" figure is a number <b>you</b> supply — Concrete has never published a total Bags count, so treat this whole tool as a what-if calculator, not a forecast. Real Bags → Concrete Points conversion, snapshot rules, and eligibility criteria are entirely up to Concrete and unknown today. Check <span class="mono-inline">points.concrete.xyz</span> for your actual standing.</p>
     </div>
   </div>
 </main>
