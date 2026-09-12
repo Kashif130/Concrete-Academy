@@ -579,7 +579,6 @@ function showView(name) {
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (name === "news") {
     startNewsAutoRefresh();
-    renderTimeline();
     if (window.twttr && window.twttr.widgets) window.twttr.widgets.load();
   } else {
     stopNewsAutoRefresh();
@@ -594,7 +593,7 @@ document.addEventListener("click", (e) => {
   if (dest === "progress") renderProgress();
   if (dest === "live") fetchLiveData();
   if (dest === "glossary") renderGlossary();
-  if (dest === "news") fetchNews();
+  if (dest === "news") fetchAndRenderUpdates();
   showView(dest);
 });
 
@@ -1033,6 +1032,7 @@ document.getElementById("glossary-search")?.addEventListener("input", (e) => {
 const TIMELINE_EVENTS = [
   {
     date: "2022",
+    sortDate: "2022-01-01",
     tag: "Founding",
     title: "Blueprint Finance is founded",
     body: "CEO Nic Roberts-Huntley and co-founder Dillon Liang start Blueprint Finance in the aftermath of FTX's collapse, aiming to rebuild on-chain trust in credit and debt infrastructure.",
@@ -1040,6 +1040,7 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "2023",
+    sortDate: "2023-06-01",
     tag: "Funding",
     title: "Pre-seed round led by Portal Ventures",
     body: "An early pre-seed round, with participation from Picks & Shovels and Canonical Crypto, funds initial development ahead of the public launch.",
@@ -1047,6 +1048,7 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "Feb 2024",
+    sortDate: "2024-02-01",
     tag: "Launch · Funding",
     title: "Concrete Protocol launches with a $7.5M raise",
     body: "Blueprint Finance comes out of stealth, introducing Concrete Protocol as an on-chain credit market with liquidation protection. The $7.5M round is led by Hashed and Tribe Capital, joined by SALT, Kyber, Hypersphere, Portal Ventures, Avalanche Foundation and others.",
@@ -1054,6 +1056,7 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "Oct 2024",
+    sortDate: "2024-10-01",
     tag: "Acquisition",
     title: "Concrete acquires Jet Protocol",
     body: "Concrete announces the acquisition of Jet Protocol, a Solana lending protocol, extending its ambitions beyond EVM chains.",
@@ -1061,6 +1064,7 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "Apr 2025",
+    sortDate: "2025-04-01",
     tag: "Product",
     title: "Jet Protocol relaunches as Glow Finance",
     body: "The acquired Solana protocol is relaunched under the Glow Finance name, complementing Concrete's core operations.",
@@ -1068,6 +1072,7 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "Jun 2025",
+    sortDate: "2025-06-01",
     tag: "Funding",
     title: "$9.5M strategic round led by Polychain Capital",
     body: "Blueprint Finance raises $9.5M to scale Concrete's infrastructure and drive institutional adoption. Polychain Capital leads, joined by YZi Labs (formerly Binance Labs), VanEck and a long list of funds and angels.",
@@ -1075,6 +1080,7 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "2025",
+    sortDate: "2025-09-01",
     tag: "Product",
     title: "WBTC Vault launches with BiT Global",
     body: "Concrete and BiT Global launch a WBTC Vault, aimed at maximizing yield on tokenized Bitcoin while keeping the same custody and transparency standards as WBTC itself.",
@@ -1082,6 +1088,7 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "Nov 27, 2025",
+    sortDate: "2025-11-27",
     tag: "Community",
     title: "Points Farming (Bags) campaign goes live",
     body: "Concrete launches its community rewards program, letting users complete tasks and farm 'Bags' that are described as converting into Concrete Points over time.",
@@ -1089,6 +1096,7 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "2026",
+    sortDate: "2026-02-01",
     tag: "Product",
     title: "USD1 RWA Vault unifies real-world-asset yield",
     body: "Concrete introduces the USD1 RWA Vault, giving USD1 holders one deposit that spans private credit, RWA and digital-infrastructure yield sources including ZIG Markets, Qiro, Colb and Origin Assets.",
@@ -1096,6 +1104,7 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "2026",
+    sortDate: "2026-03-01",
     tag: "Product",
     title: "AssetCX and concUSD extend the ecosystem",
     body: "Concrete unveils AssetCX, pairing vault infrastructure with qualified custodians like BitGo to make custodied assets productive, alongside concUSD as a further new on-chain primitive.",
@@ -1103,6 +1112,7 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "2026",
+    sortDate: "2026-04-01",
     tag: "Rebrand",
     title: "Concrete Earn: same vaults, refreshed experience",
     body: "Concrete's core deposit product is rebranded and redesigned as Concrete Earn at app.concrete.xyz/earn — the underlying vault infrastructure is unchanged.",
@@ -1110,43 +1120,32 @@ const TIMELINE_EVENTS = [
   },
   {
     date: "Aug 19, 2026",
+    sortDate: "2026-08-19",
     tag: "Funding",
     title: "Second strategic round, again led by Polychain Capital",
     body: "Blueprint Finance completes another strategic round to scale Concrete's institutional infrastructure. This time Polychain is joined by Bullish, Keyrock, BitGo, FalconX, G-20, Flowdesk, JPEG Trading, Sentient Capital, Andes and 2Square. The amount raised was not disclosed.",
     link: "https://concrete.xyz",
   },
+  /* Add new milestones here as they're officially confirmed — { date, sortDate: "YYYY-MM-DD", tag, title, body, link } — they'll
+     automatically appear in the unified Updates feed below, merged and sorted alongside the live blog feed. */
 ];
 
-function renderTimeline() {
-  const container = document.getElementById("timeline-list");
-  if (!container || container.childElementCount > 0) return;
-  container.innerHTML = "";
-  TIMELINE_EVENTS.forEach((ev) => {
-    const row = document.createElement("a");
-    row.className = "timeline-item";
-    row.href = ev.link;
-    row.target = "_blank";
-    row.rel = "noopener noreferrer";
-    row.innerHTML = `
-      <div class="timeline-date">${ev.date}</div>
-      <div class="timeline-dot" aria-hidden="true"></div>
-      <div class="timeline-body">
-        <div class="timeline-tag">${ev.tag}</div>
-        <div class="timeline-title">${ev.title}</div>
-        <p class="timeline-desc">${ev.body}</p>
-      </div>
-    `;
-    container.appendChild(row);
-  });
-}
-
-/* ============ Live feed from Concrete's own official blog ============ */
-/* Replaces the old Google News search. This pulls Concrete's actual
-   published posts (funding announcements, product launches) straight
-   from its own Paragraph blog, so every headline here is first-party —
-   no keyword-search noise, no unrelated "concrete" (the building
-   material) results. It still needs a relay for the same reason the old
-   feature did: the source doesn't send CORS headers a browser accepts. */
+/* ============ Unified Updates feed (full history + live auto-fetch) ============ */
+/* One continuous, filterable article feed that merges two sources and
+   sorts them newest-first:
+     1. TIMELINE_EVENTS above — the hand-verified record from Blueprint
+        Finance's 2022 founding through the latest confirmed milestone.
+        New entries added to that array appear here automatically.
+     2. Concrete's own official Paragraph blog, fetched live every time
+        this page opens and re-fetched every 10 minutes automatically —
+        so any new announcement, product post, or campaign the team
+        publishes going forward shows up here on its own, no manual edit
+        needed.
+   Honest limitation: turning official X/Twitter posts into full article
+   cards the same way would need a paid X API (a free static site can't
+   pull that data). The live "@ConcreteXYZ" / "@Blueprint_DeFi" embeds
+   above this feed are X's own official widgets and are already the
+   most real-time channel available for that source. */
 
 const OFFICIAL_BLOG_RSS_URL = "https://paragraph.com/api/blogs/rss/%40concretexyz";
 
@@ -1160,7 +1159,7 @@ const NEWS_AUTO_REFRESH_MS = 10 * 60 * 1000; // 10 minutes — an official blog 
 
 function startNewsAutoRefresh() {
   stopNewsAutoRefresh();
-  newsAutoRefreshTimer = setInterval(() => fetchNews(), NEWS_AUTO_REFRESH_MS);
+  newsAutoRefreshTimer = setInterval(() => fetchAndRenderUpdates(), NEWS_AUTO_REFRESH_MS);
 }
 
 function stopNewsAutoRefresh() {
@@ -1168,6 +1167,21 @@ function stopNewsAutoRefresh() {
     clearInterval(newsAutoRefreshTimer);
     newsAutoRefreshTimer = null;
   }
+}
+
+let allUpdateItems = [];
+let updatesFilter = "All";
+
+function getTimelineFeedItems() {
+  return TIMELINE_EVENTS.map((ev) => ({
+    title: ev.title,
+    summary: ev.body,
+    link: ev.link,
+    date: new Date(ev.sortDate),
+    displayDate: ev.date,
+    tag: ev.tag.split(" · ")[0],
+    source: "Milestone",
+  }));
 }
 
 function timeAgo(date) {
@@ -1241,37 +1255,80 @@ async function fetchViaProxies(targetUrl) {
   throw lastError || new Error("All relays failed");
 }
 
-async function fetchNews() {
+async function fetchAndRenderUpdates() {
   const statusEl = document.getElementById("news-status");
-  statusEl.textContent = "Fetching latest posts from Concrete's official blog…";
+
+  // Show the hand-verified history immediately (instant, never fails),
+  // then merge in the live blog fetch once it resolves — so the feed
+  // never looks empty while the network call is in flight.
+  if (allUpdateItems.length === 0) {
+    allUpdateItems = getTimelineFeedItems().sort((a, b) => b.date - a.date);
+    renderFilterChips();
+    renderUpdatesFeed();
+  }
+
+  statusEl.textContent = "Checking Concrete's official blog for new posts…";
   statusEl.className = "live-status";
 
   try {
     const xmlText = await fetchViaProxies(OFFICIAL_BLOG_RSS_URL);
-    const items = parseNewsXml(xmlText)
-      .sort((a, b) => b.date - a.date)
-      .slice(0, 15);
+    const blogItems = parseNewsXml(xmlText).map((item) => ({
+      title: item.title,
+      summary: item.summary,
+      link: item.link,
+      date: item.date,
+      displayDate: timeAgo(item.date),
+      tag: "Blog Post",
+      source: "Official blog",
+    }));
 
-    renderNews(items);
+    const timelineItems = getTimelineFeedItems();
+    const seenLinks = new Set();
+    allUpdateItems = [...blogItems, ...timelineItems]
+      .filter((it) => (seenLinks.has(it.link) ? false : (seenLinks.add(it.link), true)))
+      .sort((a, b) => b.date - a.date);
 
-    statusEl.textContent = items.length
-      ? "Live from Concrete's official blog"
-      : "Connected, but no posts came back";
+    renderFilterChips();
+    renderUpdatesFeed();
+
+    statusEl.textContent = blogItems.length
+      ? "Live — full history plus the latest from Concrete's official blog"
+      : "Connected to the blog, but no posts came back — showing full history below";
     statusEl.className = "live-status is-ok";
     document.getElementById("news-updated").textContent = "Last checked " + new Date().toLocaleTimeString();
   } catch (err) {
     statusEl.textContent =
-      "Couldn't reach the official blog feed right now — try refresh, or open the blog directly below.";
+      "Couldn't reach the live blog feed right now — showing the full hand-verified history below. It'll retry automatically.";
     statusEl.className = "live-status is-error";
   }
 }
 
-function renderNews(items) {
-  const list = document.getElementById("news-list");
-  list.innerHTML = "";
+function renderFilterChips() {
+  const bar = document.getElementById("updates-filter-bar");
+  if (!bar) return;
+  const tags = ["All", ...new Set(allUpdateItems.map((it) => it.tag))];
+  bar.innerHTML = "";
+  tags.forEach((tag) => {
+    const chip = document.createElement("button");
+    chip.className = "filter-chip" + (tag === updatesFilter ? " is-active" : "");
+    chip.textContent = tag;
+    chip.addEventListener("click", () => {
+      updatesFilter = tag;
+      renderFilterChips();
+      renderUpdatesFeed();
+    });
+    bar.appendChild(chip);
+  });
+}
 
+function renderUpdatesFeed() {
+  const list = document.getElementById("news-list");
+  if (!list) return;
+  const items = updatesFilter === "All" ? allUpdateItems : allUpdateItems.filter((it) => it.tag === updatesFilter);
+
+  list.innerHTML = "";
   if (items.length === 0) {
-    list.innerHTML = '<div class="news-empty">No posts came back from the feed just now — try refresh, or open the blog link below.</div>';
+    list.innerHTML = '<div class="news-empty">Nothing in this category yet.</div>';
     return;
   }
 
@@ -1283,9 +1340,11 @@ function renderNews(items) {
     a.rel = "noopener noreferrer";
     a.innerHTML = `
       <div class="news-item-meta">
-        <span>Official blog</span>
+        <span class="news-item-tag">${item.tag}</span>
         <span>·</span>
-        <span>${timeAgo(item.date)}</span>
+        <span>${item.source}</span>
+        <span>·</span>
+        <span>${item.displayDate}</span>
       </div>
       <div class="news-item-title">${item.title}</div>
       ${item.summary ? `<div class="news-item-summary">${item.summary}</div>` : ""}
@@ -1294,7 +1353,7 @@ function renderNews(items) {
   });
 }
 
-document.getElementById("news-refresh-btn")?.addEventListener("click", () => fetchNews());
+document.getElementById("news-refresh-btn")?.addEventListener("click", () => fetchAndRenderUpdates());
 
 /* ============ Init ============ */
 
