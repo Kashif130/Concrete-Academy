@@ -183,27 +183,22 @@
   </div>
 
   <div class="updates-subhead">
-    <div class="section-eyebrow">LIVE · OFFICIAL BLOG</div>
-    <p class="section-sub">Fetched from Concrete's own Paragraph blog every time you open this page, and refreshed automatically every 10 minutes while you stay on it — first-party posts only, no keyword-search noise.</p>
+    <div class="section-eyebrow">FULL HISTORY, LIVE-UPDATING</div>
+    <h2 style="font-family:var(--display); font-size:26px; color:var(--concrete); margin:0 0 8px;">Every update, founding to now</h2>
+    <p class="section-sub">One feed, newest first: every milestone since Blueprint Finance's 2022 founding, merged with Concrete's official blog — fetched live on open and re-checked automatically every 10 minutes, so new announcements, product launches, ecosystem news and campaigns appear here on their own as they're published.</p>
   </div>
 
-  <div id="news-status" class="live-status">Fetching latest posts…</div>
+  <div id="updates-filter-bar" class="filter-bar" role="tablist" aria-label="Filter updates by category"></div>
+
+  <div id="news-status" class="live-status">Loading updates…</div>
   <div id="news-list" class="news-list"></div>
   <div class="live-actions">
     <button class="btn btn-ghost" id="news-refresh-btn">Refresh now</button>
     <span class="live-updated" id="news-updated"></span>
   </div>
   <div class="live-footnote">
-    <p>Source: <span class="mono-inline">paragraph.com/@concretexyz</span>, Concrete's own blog, fetched through a public read-only relay so it can run from a plain static page. If the relay is briefly down, use the "Official blog" link in the Glossary page's link panel to read it directly.</p>
+    <p>Milestones are hand-verified against official announcements; blog posts come live from <span class="mono-inline">paragraph.com/@concretexyz</span> through a public read-only relay so it can run from a plain static page. If the relay is briefly down, the history above still shows in full — use the "Official blog" link in the Glossary page's link panel to read the latest post directly.</p>
   </div>
-
-  <div class="updates-subhead" style="padding-top:48px;">
-    <div class="section-eyebrow">FULL HISTORY</div>
-    <h2 style="font-family:var(--display); font-size:26px; color:var(--concrete); margin:0 0 8px;">Every major milestone so far</h2>
-    <p class="section-sub">Hand-verified against official announcements — funding rounds, product launches, acquisitions and rebrands, in order. Not auto-fetched, so it stays accurate even when a source goes offline; updated by hand as new milestones are confirmed.</p>
-  </div>
-
-  <div id="timeline-list" class="timeline-list"></div>
 </main>
 
 <main id="view-live" class="view view-hidden">
