@@ -485,6 +485,7 @@ const GLOSSARY = [
   { term: "Bags", def: "Concrete's community reward points, earned through social and platform tasks, which are described as converting into Concrete Points over time." },
   { term: "Concrete Points", def: "The metric Concrete has said will matter for eligibility if and when a token generation event happens. No official launch date has been announced as of this guide." },
   { term: "TGE (Token Generation Event)", def: "The point at which a project's token is created and typically becomes tradable — often the moment an airdrop, if any, is distributed." },
+  { term: "CT (Concrete token)", def: "Concrete's native token ticker. Coinbase added it to its public listing roadmap in September 2026 — a step toward possible future trading, not a live listing. No official contract address has been published by Concrete itself as of this writing; always verify any address directly against concrete.xyz or @ConcreteXYZ before interacting with it." },
   { term: "Probability Engine", def: "Concrete's internal system, referenced in its own materials, for automated risk assessment supporting vault and routing decisions." },
   { term: "Subgraph", def: "An indexed, queryable record of a protocol's on-chain events (deposits, withdrawals, yield updates) — what lets a dashboard show history without re-reading the entire blockchain each time." },
   { term: "Blueprint Finance", def: "The development studio behind Concrete, founded in 2022 by Nic Roberts-Huntley and Dillon Liang. 'Blueprint Finance' and 'Concrete' show up interchangeably in press coverage — Blueprint is the company, Concrete is the product." },
@@ -1126,6 +1127,14 @@ const TIMELINE_EVENTS = [
     body: "Blueprint Finance completes another strategic round to scale Concrete's institutional infrastructure. This time Polychain is joined by Bullish, Keyrock, BitGo, FalconX, G-20, Flowdesk, JPEG Trading, Sentient Capital, Andes and 2Square. The amount raised was not disclosed.",
     link: "https://concrete.xyz",
   },
+  {
+    date: "Sep 9, 2026",
+    sortDate: "2026-09-09",
+    tag: "Token",
+    title: "Coinbase adds Concrete (CT) to its listing roadmap",
+    body: "Coinbase Markets adds the Ethereum (ERC-20) Concrete token, ticker CT, to its public asset listing roadmap — a step toward a possible future spot listing, not a confirmation that trading has started. A roadmap addition does not disclose an official contract address; Concrete has not published one through its own site, X, or blog as of this writing. Always verify any contract address directly against concrete.xyz, @ConcreteXYZ, or the official docs before interacting with it — never trust an address from a random link, ad, or DM.",
+    link: "https://panews.io/articles/01a0839d-6a3d-7772-8f2d-771d9bb738dc",
+  },
   /* Add new milestones here as they're officially confirmed — { date, sortDate: "YYYY-MM-DD", tag, title, body, link } — they'll
      automatically appear in the unified Updates feed below, merged and sorted alongside the live blog feed. */
 ];
@@ -1149,10 +1158,28 @@ const TIMELINE_EVENTS = [
 
 const OFFICIAL_BLOG_RSS_URL = "https://paragraph.com/api/blogs/rss/%40concretexyz";
 
+// Multiple public, keyless relays tried in order — free relays like these
+// occasionally rate-limit or go down, so more fallbacks means fewer visitors
+// see the "couldn't reach" message. Each attempt also gets its own timeout
+// so one slow/hanging relay can't stall the others.
 const FEED_PROXIES = [
   (url) => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
   (url) => "https://corsproxy.io/?url=" + encodeURIComponent(url),
+  (url) => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url),
+  (url) => "https://thingproxy.freeboard.io/fetch/" + url,
 ];
+
+const FEED_FETCH_TIMEOUT_MS = 8000;
+
+async function fetchWithTimeout(url, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 let newsAutoRefreshTimer = null;
 const NEWS_AUTO_REFRESH_MS = 10 * 60 * 1000; // 10 minutes — an official blog posts far less often than a news search
@@ -1243,7 +1270,7 @@ async function fetchViaProxies(targetUrl) {
   let lastError = null;
   for (const buildProxyUrl of FEED_PROXIES) {
     try {
-      const res = await fetch(buildProxyUrl(targetUrl));
+      const res = await fetchWithTimeout(buildProxyUrl(targetUrl), FEED_FETCH_TIMEOUT_MS);
       if (!res.ok) throw new Error("Relay returned " + res.status);
       const text = await res.text();
       if (!text || text.length < 50) throw new Error("Empty relay response");
