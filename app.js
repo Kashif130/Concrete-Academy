@@ -511,6 +511,66 @@ const OFFICIAL_LINKS = [
   { name: "DefiLlama protocol page", url: "https://defillama.com/protocol/concrete" },
 ];
 
+/* ============ Vault Explorer data (unofficial reference) ============ */
+
+const VAULTS = [
+  {
+    id: "wbtc-vault",
+    name: "WBTC Vault",
+    shareToken: "ctWBTC",
+    category: "Bitcoin yield",
+    partner: "BiT Global",
+    custody: "MultisigStrategy — Gnosis Safe / Fordefi MPC",
+    withdrawal: "Epoch-based, batched",
+    risk: "Moderate",
+    blurb: "Yield on tokenized Bitcoin, built to keep WBTC's own custody and transparency standards intact.",
+  },
+  {
+    id: "stable-vault",
+    name: "Stablecoin Yield Vault",
+    shareToken: "ctDefiUSDT",
+    category: "Stablecoin yield",
+    partner: "—",
+    custody: "MultisigStrategy",
+    withdrawal: "Epoch-based, batched",
+    risk: "Lower",
+    blurb: "One-click deposit that routes stablecoins across Concrete's approved on-chain credit strategies.",
+  },
+  {
+    id: "usd1-rwa",
+    name: "USD1 RWA Vault",
+    shareToken: "ctUSD1",
+    category: "Real-world assets",
+    partner: "ZIG Markets · Qiro · Colb · Origin Assets",
+    custody: "MultisigStrategy + qualified custodians",
+    withdrawal: "Epoch-based, batched",
+    risk: "Diversified",
+    blurb: "One deposit spanning private credit, RWA and digital-infrastructure yield sources for USD1 holders.",
+  },
+  {
+    id: "assetcx",
+    name: "AssetCX",
+    shareToken: "Varies by asset",
+    category: "Institutional custody",
+    partner: "BitGo",
+    custody: "Qualified custodian (BitGo) + vault infrastructure",
+    withdrawal: "Per custodian agreement",
+    risk: "Institutional",
+    blurb: "Pairs vault infrastructure with a qualified custodian so custodied assets stay productive without leaving regulated custody.",
+  },
+];
+
+/* ============ Achievements (computed locally, no server) ============ */
+
+const BADGES = [
+  { id: "first-sign-off", name: "First Sign-Off", desc: "Sign off your first drawing.", check: (p) => Object.values(p).some((l) => l.done) },
+  { id: "perfect-inspection", name: "Perfect Inspection", desc: "Score full marks on any check.", check: (p) => LESSONS.some((l) => p[l.id] && p[l.id].bestScore === l.quiz.length * POINTS_PER_CORRECT) },
+  { id: "halfway", name: "Halfway There", desc: "Sign off at least half the drawing set.", check: (p) => Object.values(p).filter((l) => l.done).length >= Math.ceil(LESSONS.length / 2) },
+  { id: "blueprint-scholar", name: "Blueprint Scholar", desc: "Sign off the Blueprint Finance funding trail sheet.", check: (p) => LESSONS.some((l) => l.title.includes("Blueprint Finance") && p[l.id]?.done) },
+  { id: "architect", name: "Architect Standing", desc: "Reach the Architect tier.", check: (p, total) => currentTier(total).name === "Architect" },
+  { id: "completionist", name: "Completionist", desc: "Sign off every drawing in the set.", check: (p) => LESSONS.every((l) => p[l.id]?.done) },
+];
+
 /* ============ State ============ */
 
 function loadProgress() {
@@ -572,6 +632,10 @@ const views = {
   live: document.getElementById("view-live"),
   glossary: document.getElementById("view-glossary"),
   news: document.getElementById("view-news"),
+  tools: document.getElementById("view-tools"),
+  "tool-points": document.getElementById("view-tool-points"),
+  "tool-vaults": document.getElementById("view-tool-vaults"),
+  "tool-funding": document.getElementById("view-tool-funding"),
 };
 
 function showView(name) {
@@ -595,6 +659,9 @@ document.addEventListener("click", (e) => {
   if (dest === "live") fetchLiveData();
   if (dest === "glossary") renderGlossary();
   if (dest === "news") fetchAndRenderUpdates();
+  if (dest === "tool-points") renderPointsEstimator();
+  if (dest === "tool-vaults") renderVaultExplorer();
+  if (dest === "tool-funding") renderFundingTrail();
   showView(dest);
 });
 
@@ -766,6 +833,28 @@ function showResult(lesson, correctCount, passed) {
     : `${correctCount} of ${lesson.quiz.length} checks correct. Reread the drawing and try the inspection again — nothing is timed or limited.`;
 
   showView("result");
+  if (passed) fireConfetti();
+}
+
+/* ============ Small celebratory moment on a passed inspection ============ */
+
+function fireConfetti() {
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) return;
+  const colors = ["#ff6a2b", "#5b84b8", "#6bab7a", "#e8e6e1"];
+  const layer = document.createElement("div");
+  layer.className = "confetti-layer";
+  for (let i = 0; i < 36; i++) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.style.left = Math.random() * 100 + "vw";
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDelay = Math.random() * 0.4 + "s";
+    piece.style.animationDuration = 1.4 + Math.random() * 0.9 + "s";
+    layer.appendChild(piece);
+  }
+  document.body.appendChild(layer);
+  setTimeout(() => layer.remove(), 2600);
 }
 
 /* ============ Progress / standing ============ */
@@ -802,6 +891,25 @@ function renderProgress() {
       <td>${score} / ${max}</td>
     `;
     tbody.appendChild(tr);
+  });
+
+  renderBadges(total);
+}
+
+function renderBadges(total) {
+  const grid = document.getElementById("badges-grid");
+  if (!grid) return;
+  grid.innerHTML = "";
+  BADGES.forEach((b) => {
+    const earned = b.check(progress, total);
+    const card = document.createElement("div");
+    card.className = "badge-card" + (earned ? " badge-earned" : "");
+    card.innerHTML = `
+      <div class="badge-icon">${earned ? "✓" : "—"}</div>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${b.desc}</div>
+    `;
+    grid.appendChild(card);
   });
 }
 
@@ -1046,6 +1154,9 @@ const TIMELINE_EVENTS = [
     title: "Pre-seed round led by Portal Ventures",
     body: "An early pre-seed round, with participation from Picks & Shovels and Canonical Crypto, funds initial development ahead of the public launch.",
     link: "https://x.com/ConcreteXYZ",
+    amountUsd: null,
+    round: "Pre-seed",
+    investors: ["Portal Ventures (lead)", "Picks & Shovels", "Canonical Crypto"],
   },
   {
     date: "Feb 2024",
@@ -1054,6 +1165,9 @@ const TIMELINE_EVENTS = [
     title: "Concrete Protocol launches with a $7.5M raise",
     body: "Blueprint Finance comes out of stealth, introducing Concrete Protocol as an on-chain credit market with liquidation protection. The $7.5M round is led by Hashed and Tribe Capital, joined by SALT, Kyber, Hypersphere, Portal Ventures, Avalanche Foundation and others.",
     link: "https://paragraph.com/@concretexyz/concrete-protocol-the-foundation-for-on-chain-credit",
+    amountUsd: 7500000,
+    round: "Seed",
+    investors: ["Hashed (lead)", "Tribe Capital (lead)", "SALT", "Kyber", "Hypersphere", "Portal Ventures", "Avalanche Foundation"],
   },
   {
     date: "Oct 2024",
@@ -1078,6 +1192,9 @@ const TIMELINE_EVENTS = [
     title: "$9.5M strategic round led by Polychain Capital",
     body: "Blueprint Finance raises $9.5M to scale Concrete's infrastructure and drive institutional adoption. Polychain Capital leads, joined by YZi Labs (formerly Binance Labs), VanEck and a long list of funds and angels.",
     link: "https://paragraph.com/@concretexyz/building-the-future-of-institutional-defi-blueprint-finance-raises-9-5m",
+    amountUsd: 9500000,
+    round: "Strategic",
+    investors: ["Polychain Capital (lead)", "YZi Labs", "VanEck", "and other funds/angels"],
   },
   {
     date: "2025",
@@ -1126,6 +1243,9 @@ const TIMELINE_EVENTS = [
     title: "Second strategic round, again led by Polychain Capital",
     body: "Blueprint Finance completes another strategic round to scale Concrete's institutional infrastructure. This time Polychain is joined by Bullish, Keyrock, BitGo, FalconX, G-20, Flowdesk, JPEG Trading, Sentient Capital, Andes and 2Square. The amount raised was not disclosed.",
     link: "https://concrete.xyz",
+    amountUsd: null,
+    round: "Strategic (2nd)",
+    investors: ["Polychain Capital (lead)", "Bullish", "Keyrock", "BitGo", "FalconX", "G-20", "Flowdesk", "JPEG Trading", "Sentient Capital", "Andes", "2Square"],
   },
   {
     date: "Sep 9, 2026",
@@ -1381,6 +1501,169 @@ function renderUpdatesFeed() {
 }
 
 document.getElementById("news-refresh-btn")?.addEventListener("click", () => fetchAndRenderUpdates());
+
+/* ============ Tool: Bags Estimator (points.concrete.xyz, unofficial) ============ */
+/* No real formula is published for Concrete Points/Bags. This uses a made-up,
+   transparently-shown formula purely to illustrate how deposit-weighted,
+   time-weighted points programs typically behave. It reads no wallet data
+   and writes nothing back — it's a slider toy, not a predictor. */
+
+const POINTS_ESTIMATOR_VAULT_MULTIPLIERS = [
+  { id: "stable-vault", name: "Stablecoin Yield Vault", multiplier: 1 },
+  { id: "wbtc-vault", name: "WBTC Vault", multiplier: 1.2 },
+  { id: "usd1-rwa", name: "USD1 RWA Vault", multiplier: 1.35 },
+  { id: "assetcx", name: "AssetCX", multiplier: 1.5 },
+];
+
+let pointsEstimatorInit = false;
+
+function renderPointsEstimator() {
+  const vaultSelect = document.getElementById("pe-vault");
+  if (vaultSelect && vaultSelect.options.length === 0) {
+    POINTS_ESTIMATOR_VAULT_MULTIPLIERS.forEach((v) => {
+      const opt = document.createElement("option");
+      opt.value = v.multiplier;
+      opt.textContent = v.name;
+      vaultSelect.appendChild(opt);
+    });
+  }
+  if (!pointsEstimatorInit) {
+    ["pe-amount", "pe-vault", "pe-days", "pe-referrals", "pe-social"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", updatePointsEstimate);
+    });
+    pointsEstimatorInit = true;
+  }
+  updatePointsEstimate();
+}
+
+function updatePointsEstimate() {
+  const amount = parseInt(document.getElementById("pe-amount").value, 10);
+  const days = parseInt(document.getElementById("pe-days").value, 10);
+  const referrals = parseInt(document.getElementById("pe-referrals").value, 10);
+  const social = document.getElementById("pe-social").checked;
+  const vaultMultiplier = parseFloat(document.getElementById("pe-vault").value) || 1;
+
+  document.getElementById("pe-amount-out").textContent = "$" + amount.toLocaleString();
+  document.getElementById("pe-days-out").textContent = days + (days === 1 ? " day" : " days");
+  document.getElementById("pe-referrals-out").textContent = String(referrals);
+
+  const baseDailyRate = amount * 0.002 * vaultMultiplier;
+  const depositPoints = Math.round(baseDailyRate * days);
+  const referralPoints = referrals * 40;
+  const socialPoints = social ? 150 : 0;
+  const total = depositPoints + referralPoints + socialPoints;
+
+  document.getElementById("pe-total").textContent = total.toLocaleString() + " Bags";
+
+  const breakdown = document.getElementById("pe-breakdown");
+  breakdown.innerHTML = `
+    <div class="breakdown-row"><span>Deposit &times; time</span><span>${depositPoints.toLocaleString()}</span></div>
+    <div class="breakdown-row"><span>Referral bonus (${referrals} &times; 40)</span><span>${referralPoints.toLocaleString()}</span></div>
+    <div class="breakdown-row"><span>Social/community tasks</span><span>${socialPoints.toLocaleString()}</span></div>
+  `;
+}
+
+/* ============ Tool: Vault Explorer (app.concrete.xyz, unofficial) ============ */
+
+let activeVaultFilter = "All";
+
+function renderVaultExplorer() {
+  const filterBar = document.getElementById("vault-filter-bar");
+  const categories = ["All", ...new Set(VAULTS.map((v) => v.category))];
+  filterBar.innerHTML = "";
+  categories.forEach((cat) => {
+    const chip = document.createElement("button");
+    chip.className = "filter-chip" + (cat === activeVaultFilter ? " is-active" : "");
+    chip.textContent = cat;
+    chip.addEventListener("click", () => {
+      activeVaultFilter = cat;
+      renderVaultExplorer();
+    });
+    filterBar.appendChild(chip);
+  });
+
+  const grid = document.getElementById("vault-grid");
+  grid.innerHTML = "";
+  const list = activeVaultFilter === "All" ? VAULTS : VAULTS.filter((v) => v.category === activeVaultFilter);
+  list.forEach((v) => {
+    const card = document.createElement("div");
+    card.className = "vault-card";
+    card.innerHTML = `
+      <div class="vault-card-head">
+        <h3>${v.name}</h3>
+        <span class="vault-risk-pill">${v.risk} risk</span>
+      </div>
+      <div class="vault-share-token">${v.shareToken}</div>
+      <p class="vault-blurb">${v.blurb}</p>
+      <dl class="vault-facts">
+        <div><dt>Category</dt><dd>${v.category}</dd></div>
+        <div><dt>Partner</dt><dd>${v.partner}</dd></div>
+        <div><dt>Custody</dt><dd>${v.custody}</dd></div>
+        <div><dt>Withdrawals</dt><dd>${v.withdrawal}</dd></div>
+      </dl>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* ============ Tool: Funding Trail (Blueprint Finance) ============ */
+
+function renderFundingTrail() {
+  const fundingEvents = TIMELINE_EVENTS.filter((e) => e.tag.includes("Funding") || e.tag.includes("Launch")).filter((e) => "amountUsd" in e);
+
+  const disclosedTotal = fundingEvents.reduce((sum, e) => sum + (e.amountUsd || 0), 0);
+  const disclosedCount = fundingEvents.filter((e) => e.amountUsd).length;
+  const undisclosedCount = fundingEvents.length - disclosedCount;
+
+  const stats = document.getElementById("funding-stats");
+  stats.innerHTML = `
+    <div class="funding-stat">
+      <div class="funding-stat-value">${formatUsd(disclosedTotal)}</div>
+      <div class="funding-stat-label">Disclosed total raised</div>
+    </div>
+    <div class="funding-stat">
+      <div class="funding-stat-value">${fundingEvents.length}</div>
+      <div class="funding-stat-label">Rounds since 2022</div>
+    </div>
+    <div class="funding-stat">
+      <div class="funding-stat-value">${undisclosedCount}</div>
+      <div class="funding-stat-label">Undisclosed amount</div>
+    </div>
+  `;
+
+  const maxAmount = Math.max(...fundingEvents.map((e) => e.amountUsd || 0), 1);
+  const chart = document.getElementById("funding-chart");
+  chart.innerHTML = "";
+  fundingEvents.forEach((e) => {
+    const bar = document.createElement("div");
+    bar.className = "funding-bar-col";
+    const heightPct = e.amountUsd ? Math.max(6, (e.amountUsd / maxAmount) * 100) : 10;
+    bar.innerHTML = `
+      <div class="funding-bar-value">${e.amountUsd ? formatUsd(e.amountUsd) : "Undisclosed"}</div>
+      <div class="funding-bar ${e.amountUsd ? "" : "funding-bar-undisclosed"}" style="height:${heightPct}%"></div>
+      <div class="funding-bar-label">${e.round || e.date}</div>
+    `;
+    chart.appendChild(bar);
+  });
+
+  const list = document.getElementById("funding-round-list");
+  list.innerHTML = "";
+  fundingEvents.forEach((e) => {
+    const row = document.createElement("div");
+    row.className = "funding-round-card";
+    row.innerHTML = `
+      <div class="funding-round-head">
+        <span class="funding-round-name">${e.round || "Round"} &middot; ${e.date}</span>
+        <span class="funding-round-amount">${e.amountUsd ? formatUsd(e.amountUsd) : "Undisclosed"}</span>
+      </div>
+      <p class="funding-round-desc">${e.body}</p>
+      <div class="funding-investor-chips">
+        ${(e.investors || []).map((inv) => `<span class="investor-chip">${inv}</span>`).join("")}
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
 
 /* ============ Init ============ */
 
