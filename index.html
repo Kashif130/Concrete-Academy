@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Plan — A Concrete Community Field Guide</title>
+<meta name="description" content="An unofficial, community-built field guide to Concrete's vaults, points system, stack and funding history — with live official X feeds, a live blog feed, and live protocol data — learn by working through the sheets, then pass inspection.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</head>
+<body>
+
+<div class="grid-overlay" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="mark">
+      <span class="mark-glyph">▚</span>
+      <span class="mark-text">SITE PLAN</span>
+    </div>
+    <nav class="header-nav">
+      <span class="nav-item" data-nav="home">Cover Sheet</span>
+      <span class="nav-item" data-nav="lessons">Drawings</span>
+      <span class="nav-item" data-nav="news">Updates</span>
+      <span class="nav-item" data-nav="live">Live Data</span>
+      <span class="nav-item" data-nav="glossary">Glossary</span>
+      <span class="nav-item" data-nav="progress">Inspection Log</span>
+    </nav>
+  </div>
+</header>
+
+<main id="view-home" class="view">
+  <section class="hero">
+    <div class="hero-annotation">UNOFFICIAL · COMMUNITY-DRAFTED · NOT AFFILIATED WITH THE CONCRETE TEAM</div>
+    <h1 class="hero-title">A Field Guide to<br>How Concrete Is Built.</h1>
+    <p class="hero-lede">Ten drawings covering the vaults, the stack, custody and roles, the risk engine, the points system, the institutional pivot and the funding trail — plus live protocol data, live official X feeds, and a full glossary — written by a community member so the next person doesn't have to piece it together from threads and airdrop guides.</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary" data-nav="lessons">Open the drawings</button>
+      <button class="btn btn-ghost" data-nav="live">See live data</button>
+      <button class="btn btn-ghost" data-nav="news">See official updates</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-value" id="stat-drawings">10</div>
+        <div class="stat-label">Drawings</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-checks">30</div>
+        <div class="stat-label">Checks</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="hero-tier">Unrated</div>
+        <div class="stat-label">Your standing</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="live-teaser" id="live-teaser">
+    <div class="live-teaser-inner">
+      <div class="live-dot" aria-hidden="true"></div>
+      <div>
+        <div class="live-teaser-label">LIVE FROM DEFILLAMA</div>
+        <div class="live-teaser-value" id="live-teaser-tvl">Loading current TVL…</div>
+      </div>
+    </div>
+    <span class="live-teaser-link" data-nav="live">Open live data page &rarr;</span>
+  </section>
+
+  <section class="how-it-works">
+    <div class="hiw-annotation">HOW TO USE THIS SET</div>
+    <div class="hiw-grid">
+      <div class="hiw-card">
+        <div class="hiw-num">01</div>
+        <h3>Read a drawing</h3>
+        <p>Each sheet explains one part of Concrete — plain language, no jargon left unexplained.</p>
+      </div>
+      <div class="hiw-card">
+        <div class="hiw-num">02</div>
+        <h3>Pass inspection</h3>
+        <p>Three checks per sheet. Get them right to sign off and move to the next drawing.</p>
+      </div>
+      <div class="hiw-card">
+        <div class="hiw-num">03</div>
+        <h3>Earn your standing</h3>
+        <p>Your rating updates as you clear sheets — Apprentice through Architect. Kept on this device only.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<main id="view-lessons" class="view view-hidden">
+  <section class="section-head">
+    <div class="section-eyebrow">DRAWING SET</div>
+    <h2>Pick a sheet</h2>
+    <p class="section-sub">Work through them in order, or jump to whatever you're fuzzy on.</p>
+  </section>
+  <div id="lesson-index" class="lesson-index"></div>
+</main>
+
+<main id="view-lesson-detail" class="view view-hidden">
+  <div class="lesson-detail-wrap">
+    <button class="back-link" data-nav="lessons">&larr; Back to drawing set</button>
+    <article id="lesson-content"></article>
+  </div>
+</main>
+
+<main id="view-quiz" class="view view-hidden">
+  <div class="quiz-wrap">
+    <div class="quiz-head">
+      <div class="section-eyebrow" id="quiz-sheet-label">INSPECTION</div>
+      <h2 id="quiz-title">Checklist</h2>
+    </div>
+    <div id="quiz-body"></div>
+  </div>
+</main>
+
+<main id="view-result" class="view view-hidden">
+  <div class="result-wrap">
+    <div class="result-stamp" id="result-stamp">PASSED</div>
+    <h2 id="result-heading">Signed off</h2>
+    <p id="result-detail" class="result-detail"></p>
+    <div class="result-actions">
+      <button class="btn btn-primary" data-nav="lessons">Next drawing</button>
+      <button class="btn btn-ghost" data-nav="progress">See standing</button>
+    </div>
+  </div>
+</main>
+
+<main id="view-progress" class="view view-hidden">
+  <section class="section-head">
+    <div class="section-eyebrow">INSPECTION LOG</div>
+    <h2>Your standing</h2>
+    <p class="section-sub">This tracker lives in your browser only. It has nothing to do with Concrete's official Bags or Points — it's just here so effort in this guide feels like it counts for something.</p>
+  </section>
+
+  <div class="tier-panel">
+    <div class="tier-current">
+      <div class="tier-label">Current rating</div>
+      <div class="tier-name" id="progress-tier">Unrated</div>
+      <div class="tier-bar-track"><div class="tier-bar-fill" id="tier-bar-fill"></div></div>
+      <div class="tier-points" id="tier-points">0 / 180 marks</div>
+    </div>
+    <ul class="tier-ladder" id="tier-ladder"></ul>
+  </div>
+
+  <div class="log-table-wrap">
+    <div class="section-eyebrow">SHEET-BY-SHEET</div>
+    <table class="log-table">
+      <thead>
+        <tr><th>Sheet</th><th>Title</th><th>Status</th><th>Score</th></tr>
+      </thead>
+      <tbody id="log-table-body"></tbody>
+    </table>
+  </div>
+
+  <button class="reset-link" id="reset-progress">Reset my progress</button>
+</main>
+
+<main id="view-news" class="view view-hidden">
+  <section class="section-head">
+    <div class="section-eyebrow">OFFICIAL UPDATES</div>
+    <h2>Concrete &amp; Blueprint Finance, straight from the source</h2>
+    <p class="section-sub">No more generic news search. This page pulls directly from Concrete's and Blueprint Finance's own official X accounts and Concrete's own blog, plus a hand-verified timeline of every major milestone so far.</p>
+  </section>
+
+  <div class="updates-subhead">
+    <div class="section-eyebrow">LIVE · OFFICIAL X ACCOUNTS</div>
+    <p class="section-sub">These panels are X's own embedded timelines — they update in real time as new posts go out, with no fetching or refreshing needed on this end.</p>
+  </div>
+
+  <div class="x-embed-grid">
+    <div class="x-embed-card">
+      <div class="x-embed-label">@ConcreteXYZ</div>
+      <a class="twitter-timeline" data-height="500" data-theme="dark" href="https://twitter.com/ConcreteXYZ?ref_src=twsrc%5Etfw">Tweets by ConcreteXYZ</a>
+    </div>
+    <div class="x-embed-card">
+      <div class="x-embed-label">@Blueprint_DeFi</div>
+      <a class="twitter-timeline" data-height="500" data-theme="dark" href="https://twitter.com/Blueprint_DeFi?ref_src=twsrc%5Etfw">Tweets by Blueprint_DeFi</a>
+    </div>
+  </div>
+
+  <div class="updates-subhead">
+    <div class="section-eyebrow">LIVE · OFFICIAL BLOG</div>
+    <p class="section-sub">Fetched from Concrete's own Paragraph blog every time you open this page, and refreshed automatically every 10 minutes while you stay on it — first-party posts only, no keyword-search noise.</p>
+  </div>
+
+  <div id="news-status" class="live-status">Fetching latest posts…</div>
+  <div id="news-list" class="news-list"></div>
+  <div class="live-actions">
+    <button class="btn btn-ghost" id="news-refresh-btn">Refresh now</button>
+    <span class="live-updated" id="news-updated"></span>
+  </div>
+  <div class="live-footnote">
+    <p>Source: <span class="mono-inline">paragraph.com/@concretexyz</span>, Concrete's own blog, fetched through a public read-only relay so it can run from a plain static page. If the relay is briefly down, use the "Official blog" link in the Glossary page's link panel to read it directly.</p>
+  </div>
+
+  <div class="updates-subhead" style="padding-top:48px;">
+    <div class="section-eyebrow">FULL HISTORY</div>
+    <h2 style="font-family:var(--display); font-size:26px; color:var(--concrete); margin:0 0 8px;">Every major milestone so far</h2>
+    <p class="section-sub">Hand-verified against official announcements — funding rounds, product launches, acquisitions and rebrands, in order. Not auto-fetched, so it stays accurate even when a source goes offline; updated by hand as new milestones are confirmed.</p>
+  </div>
+
+  <div id="timeline-list" class="timeline-list"></div>
+</main>
+
+<main id="view-live" class="view view-hidden">
+  <section class="section-head">
+    <div class="section-eyebrow">LIVE PROTOCOL DATA</div>
+    <h2>Concrete, right now</h2>
+    <p class="section-sub">Pulled live from DefiLlama's public API on every visit — not hardcoded, not a screenshot. This is the same data DefiLlama shows on its own site.</p>
+  </section>
+
+  <div id="live-status" class="live-status">Fetching current figures…</div>
+
+  <div class="live-grid" id="live-grid">
+    <div class="live-card">
+      <div class="live-card-label">Total Value Locked</div>
+      <div class="live-card-value" id="live-tvl">—</div>
+      <div class="live-card-sub" id="live-tvl-change">—</div>
+    </div>
+    <div class="live-card">
+      <div class="live-card-label">Category</div>
+      <div class="live-card-value" id="live-category">—</div>
+      <div class="live-card-sub">Onchain Capital Allocator</div>
+    </div>
+    <div class="live-card">
+      <div class="live-card-label">Chains deployed on</div>
+      <div class="live-card-value" id="live-chains">—</div>
+      <div class="live-card-sub" id="live-chains-list">—</div>
+    </div>
+  </div>
+
+  <div class="sparkline-card">
+    <div class="live-card-label">TVL history (recent)</div>
+    <svg id="tvl-sparkline" class="sparkline-svg" preserveAspectRatio="none"></svg>
+  </div>
+
+  <div class="live-actions">
+    <button class="btn btn-ghost" id="live-refresh-btn">Refresh now</button>
+    <span class="live-updated" id="live-updated"></span>
+  </div>
+
+  <div class="live-footnote">
+    <p>Source: <span class="mono-inline">api.llama.fi/protocol/concrete</span>, the public API behind <span class="mono-inline">defillama.com</span>. TVL is a market snapshot, not a guarantee of vault performance, safety, or future returns — always confirm figures on Concrete's own app before making a financial decision.</p>
+  </div>
+
+  <section class="section-head">
+    <div class="section-eyebrow">FUNDING OVERVIEW</div>
+    <h2>Who's backed Concrete, round by round</h2>
+    <p class="section-sub">This part is hand-verified against public announcements, not live-fetched — funding rounds aren't the kind of thing that changes minute to minute the way TVL does.</p>
+  </section>
+  <div id="funding-list" class="funding-list"></div>
+</main>
+
+<main id="view-glossary" class="view view-hidden">
+  <section class="section-head">
+    <div class="section-eyebrow">REFERENCE</div>
+    <h2>Glossary</h2>
+    <p class="section-sub">The terms that show up across every drawing, in one place. Click a term to expand it.</p>
+  </section>
+  <div id="glossary-search-wrap" class="glossary-search-wrap">
+    <input id="glossary-search" class="glossary-search" type="text" placeholder="Search a term…" autocomplete="off">
+  </div>
+  <div id="glossary-list" class="glossary-list"></div>
+
+  <section class="section-head" style="padding-top:56px;">
+    <div class="section-eyebrow">VERIFIED LINKS</div>
+    <h2>Official Concrete resources</h2>
+    <p class="section-sub">Bookmark these. Anything asking for a wallet seed phrase or private key is never one of them.</p>
+  </section>
+  <div class="link-grid" id="link-grid"></div>
+</main>
+
+<footer class="site-footer">
+  <p>Drafted by a community member, not the Concrete team. Verify anything money-related on the official app before you act on it. Official X accounts: <a href="https://x.com/ConcreteXYZ" target="_blank" rel="noopener noreferrer" class="mono-inline">@ConcreteXYZ</a> and <a href="https://x.com/Blueprint_DeFi" target="_blank" rel="noopener noreferrer" class="mono-inline">@Blueprint_DeFi</a>.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
