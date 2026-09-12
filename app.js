@@ -633,7 +633,9 @@ const views = {
   glossary: document.getElementById("view-glossary"),
   news: document.getElementById("view-news"),
   tools: document.getElementById("view-tools"),
-  "tool-points": document.getElementById("view-tool-points"),
+  "tool-yield": document.getElementById("view-tool-yield"),
+  "tool-optimizer": document.getElementById("view-tool-optimizer"),
+  "tool-airdrop": document.getElementById("view-tool-airdrop"),
   "tool-vaults": document.getElementById("view-tool-vaults"),
   "tool-funding": document.getElementById("view-tool-funding"),
 };
@@ -659,7 +661,9 @@ document.addEventListener("click", (e) => {
   if (dest === "live") fetchLiveData();
   if (dest === "glossary") renderGlossary();
   if (dest === "news") fetchAndRenderUpdates();
-  if (dest === "tool-points") renderPointsEstimator();
+  if (dest === "tool-yield") renderVaultYieldCalculator();
+  if (dest === "tool-optimizer") renderVaultOptimizer();
+  if (dest === "tool-airdrop") renderAirdropChecker();
   if (dest === "tool-vaults") renderVaultExplorer();
   if (dest === "tool-funding") renderFundingTrail();
   showView(dest);
@@ -1502,65 +1506,247 @@ function renderUpdatesFeed() {
 
 document.getElementById("news-refresh-btn")?.addEventListener("click", () => fetchAndRenderUpdates());
 
-/* ============ Tool: Bags Estimator (points.concrete.xyz, unofficial) ============ */
-/* No real formula is published for Concrete Points/Bags. This uses a made-up,
-   transparently-shown formula purely to illustrate how deposit-weighted,
-   time-weighted points programs typically behave. It reads no wallet data
-   and writes nothing back — it's a slider toy, not a predictor. */
+/* ============ Tool: Vault Yield Calculator + Vault Optimizer (app.concrete.xyz, unofficial) ============ */
+/* Real vault data, not made up: this fetches Concrete's actual live pools
+   (symbol, chain, TVL, APY) straight from DefiLlama's free public yields
+   API — the same kind of source the Live Data page already uses for TVL.
+   No wallet is read; the deposit amount is hypothetical, the APY is real. */
 
-const POINTS_ESTIMATOR_VAULT_MULTIPLIERS = [
-  { id: "stable-vault", name: "Stablecoin Yield Vault", multiplier: 1 },
-  { id: "wbtc-vault", name: "WBTC Vault", multiplier: 1.2 },
-  { id: "usd1-rwa", name: "USD1 RWA Vault", multiplier: 1.35 },
-  { id: "assetcx", name: "AssetCX", multiplier: 1.5 },
-];
+const CONCRETE_YIELDS_URL = "https://yields.llama.fi/pools";
+let concreteVaultsCache = null; // array of live pool objects, or null if not loaded/failed
+let concreteVaultsFetchedAt = null;
 
-let pointsEstimatorInit = false;
-
-function renderPointsEstimator() {
-  const vaultSelect = document.getElementById("pe-vault");
-  if (vaultSelect && vaultSelect.options.length === 0) {
-    POINTS_ESTIMATOR_VAULT_MULTIPLIERS.forEach((v) => {
-      const opt = document.createElement("option");
-      opt.value = v.multiplier;
-      opt.textContent = v.name;
-      vaultSelect.appendChild(opt);
-    });
-  }
-  if (!pointsEstimatorInit) {
-    ["pe-amount", "pe-vault", "pe-days", "pe-referrals", "pe-social"].forEach((id) => {
-      document.getElementById(id).addEventListener("input", updatePointsEstimate);
-    });
-    pointsEstimatorInit = true;
-  }
-  updatePointsEstimate();
+async function fetchConcreteVaults() {
+  if (concreteVaultsCache) return concreteVaultsCache;
+  const res = await fetch(CONCRETE_YIELDS_URL);
+  if (!res.ok) throw new Error("Bad response: " + res.status);
+  const data = await res.json();
+  const pools = Array.isArray(data.data) ? data.data : [];
+  const concretePools = pools
+    .filter((p) => p.project === "concrete")
+    .sort((a, b) => (b.apy || 0) - (a.apy || 0));
+  concreteVaultsCache = concretePools;
+  concreteVaultsFetchedAt = new Date();
+  return concretePools;
 }
 
-function updatePointsEstimate() {
-  const amount = parseInt(document.getElementById("pe-amount").value, 10);
-  const days = parseInt(document.getElementById("pe-days").value, 10);
-  const referrals = parseInt(document.getElementById("pe-referrals").value, 10);
-  const social = document.getElementById("pe-social").checked;
-  const vaultMultiplier = parseFloat(document.getElementById("pe-vault").value) || 1;
+function vaultDisplayName(pool) {
+  return pool.poolMeta || pool.symbol || pool.pool;
+}
 
-  document.getElementById("pe-amount-out").textContent = "$" + amount.toLocaleString();
-  document.getElementById("pe-days-out").textContent = days + (days === 1 ? " day" : " days");
-  document.getElementById("pe-referrals-out").textContent = String(referrals);
+function compoundEarnings(principal, apyPct, days) {
+  if (!principal || !isFinite(apyPct) || days <= 0) return 0;
+  const dailyRate = apyPct / 100 / 365;
+  return principal * (Math.pow(1 + dailyRate, days) - 1);
+}
 
-  const baseDailyRate = amount * 0.002 * vaultMultiplier;
-  const depositPoints = Math.round(baseDailyRate * days);
-  const referralPoints = referrals * 40;
-  const socialPoints = social ? 150 : 0;
-  const total = depositPoints + referralPoints + socialPoints;
+/* ---- Vault Yield Calculator ---- */
 
-  document.getElementById("pe-total").textContent = total.toLocaleString() + " Bags";
+let yieldCalcInit = false;
 
-  const breakdown = document.getElementById("pe-breakdown");
-  breakdown.innerHTML = `
-    <div class="breakdown-row"><span>Deposit &times; time</span><span>${depositPoints.toLocaleString()}</span></div>
-    <div class="breakdown-row"><span>Referral bonus (${referrals} &times; 40)</span><span>${referralPoints.toLocaleString()}</span></div>
-    <div class="breakdown-row"><span>Social/community tasks</span><span>${socialPoints.toLocaleString()}</span></div>
+async function renderVaultYieldCalculator() {
+  const statusEl = document.getElementById("yield-status");
+  const select = document.getElementById("ye-vault");
+  statusEl.textContent = "Fetching live Concrete vault data…";
+  statusEl.className = "live-status";
+
+  try {
+    const vaults = await fetchConcreteVaults();
+    if (!vaults.length) throw new Error("No concrete pools returned");
+
+    select.innerHTML = "";
+    vaults.forEach((v, i) => {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = `${vaultDisplayName(v)} — ${v.apy.toFixed(2)}% APY (${formatUsd(v.tvlUsd)} TVL)`;
+      select.appendChild(opt);
+    });
+
+    statusEl.textContent = `Connected to yields.llama.fi — ${vaults.length} live Concrete pool${vaults.length === 1 ? "" : "s"} found, last updated ${concreteVaultsFetchedAt.toLocaleTimeString()}.`;
+    statusEl.className = "live-status is-ok";
+
+    if (!yieldCalcInit) {
+      ["ye-amount", "ye-vault", "ye-days"].forEach((id) => {
+        document.getElementById(id).addEventListener("input", updateYieldEstimate);
+      });
+      yieldCalcInit = true;
+    }
+    updateYieldEstimate();
+  } catch (err) {
+    statusEl.textContent = "Couldn't reach DefiLlama's live vault data right now — try reopening this tool, or check yields.llama.fi/pools directly.";
+    statusEl.className = "live-status is-error";
+    select.innerHTML = "<option>Live data unavailable</option>";
+    document.getElementById("ye-apy").textContent = "—";
+    document.getElementById("ye-vault-meta").innerHTML = "";
+    document.getElementById("ye-earnings-grid").innerHTML = "";
+  }
+}
+
+function updateYieldEstimate() {
+  if (!concreteVaultsCache || !concreteVaultsCache.length) return;
+  const amount = parseInt(document.getElementById("ye-amount").value, 10);
+  const days = parseInt(document.getElementById("ye-days").value, 10);
+  const idx = parseInt(document.getElementById("ye-vault").value, 10) || 0;
+  const vault = concreteVaultsCache[idx];
+  if (!vault) return;
+
+  document.getElementById("ye-amount-out").textContent = "$" + amount.toLocaleString();
+  document.getElementById("ye-days-out").textContent = days + (days === 1 ? " day" : " days");
+  document.getElementById("ye-apy").textContent = vault.apy.toFixed(2) + "%";
+
+  document.getElementById("ye-vault-meta").innerHTML = `
+    <div class="breakdown-row"><span>Chain</span><span>${vault.chain}</span></div>
+    <div class="breakdown-row"><span>Vault TVL</span><span>${formatUsd(vault.tvlUsd)}</span></div>
+    <div class="breakdown-row"><span>Base APY</span><span>${(vault.apyBase ?? 0).toFixed(2)}%</span></div>
+    <div class="breakdown-row"><span>Reward APY</span><span>${(vault.apyReward ?? 0).toFixed(2)}%</span></div>
   `;
+
+  const periods = [
+    { label: "Daily", days: 1 },
+    { label: "Weekly", days: 7 },
+    { label: "Monthly", days: 30 },
+    { label: "Half-yearly", days: 182.5 },
+    { label: "Yearly", days: 365 },
+  ];
+  const grid = document.getElementById("ye-earnings-grid");
+  grid.innerHTML = periods
+    .map((p) => {
+      const earning = compoundEarnings(amount, vault.apy, p.days);
+      return `
+        <div class="earnings-card">
+          <div class="earnings-card-label">${p.label}</div>
+          <div class="earnings-card-value">+$${earning.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+        </div>`;
+    })
+    .join("");
+
+  const heldEarning = compoundEarnings(amount, vault.apy, days);
+  grid.innerHTML += `
+    <div class="earnings-card earnings-card-highlight">
+      <div class="earnings-card-label">Over ${days} day${days === 1 ? "" : "s"} (your selection)</div>
+      <div class="earnings-card-value">+$${heldEarning.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+    </div>`;
+}
+
+/* ---- Vault Optimizer ---- */
+
+let optimizerInit = false;
+
+async function renderVaultOptimizer() {
+  const statusEl = document.getElementById("optimizer-status");
+  statusEl.textContent = "Fetching live Concrete vault data…";
+  statusEl.className = "live-status";
+
+  try {
+    const vaults = await fetchConcreteVaults();
+    if (!vaults.length) throw new Error("No concrete pools returned");
+    statusEl.textContent = `Connected to yields.llama.fi — ranking ${vaults.length} live Concrete pool${vaults.length === 1 ? "" : "s"} by current APY, last updated ${concreteVaultsFetchedAt.toLocaleTimeString()}.`;
+    statusEl.className = "live-status is-ok";
+
+    if (!optimizerInit) {
+      ["op-amount", "op-days"].forEach((id) => {
+        document.getElementById(id).addEventListener("input", updateOptimizerList);
+      });
+      optimizerInit = true;
+    }
+    updateOptimizerList();
+  } catch (err) {
+    statusEl.textContent = "Couldn't reach DefiLlama's live vault data right now — try reopening this tool, or check yields.llama.fi/pools directly.";
+    statusEl.className = "live-status is-error";
+    document.getElementById("optimizer-list").innerHTML = "";
+  }
+}
+
+function updateOptimizerList() {
+  if (!concreteVaultsCache || !concreteVaultsCache.length) return;
+  const amount = parseInt(document.getElementById("op-amount").value, 10);
+  const days = parseInt(document.getElementById("op-days").value, 10);
+  document.getElementById("op-amount-out").textContent = "$" + amount.toLocaleString();
+  document.getElementById("op-days-out").textContent = days + (days === 1 ? " day" : " days");
+
+  const list = document.getElementById("optimizer-list");
+  list.innerHTML = concreteVaultsCache
+    .map((v, i) => {
+      const earning = compoundEarnings(amount, v.apy, days);
+      return `
+        <div class="optimizer-row${i === 0 ? " optimizer-row-best" : ""}">
+          <div class="optimizer-rank">${i === 0 ? "★ Best" : "#" + (i + 1)}</div>
+          <div class="optimizer-name">
+            <div class="optimizer-name-main">${vaultDisplayName(v)}</div>
+            <div class="optimizer-name-sub">${v.chain} · ${formatUsd(v.tvlUsd)} TVL</div>
+          </div>
+          <div class="optimizer-apy">${v.apy.toFixed(2)}% APY</div>
+          <div class="optimizer-earning">+$${earning.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+        </div>`;
+    })
+    .join("");
+}
+
+/* ============ Tool: Airdrop Allocation Checker ($CT, hypothetical) ============ */
+/* Concrete has not announced a token, ticker, or airdrop date. "$CT" and every
+   number here are placeholders the user controls, styled after community
+   airdrop-scenario calculators (e.g. Jumper's XP calculator) — this is a
+   what-if model, not a prediction, and reads no wallet. */
+
+const AIRDROP_MAX_SUPPLY = 1_000_000_000;
+const AIRDROP_FDV_OPTIONS = [50_000_000, 250_000_000, 500_000_000, 1_000_000_000, 3_000_000_000];
+let airdropSelectedFdv = 250_000_000;
+let airdropInit = false;
+
+function renderAirdropChecker() {
+  const chipRow = document.getElementById("ad-fdv-chips");
+  if (chipRow.children.length === 0) {
+    AIRDROP_FDV_OPTIONS.forEach((fdv) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "filter-chip fdv-chip" + (fdv === airdropSelectedFdv ? " is-active" : "");
+      chip.textContent = formatUsd(fdv);
+      chip.addEventListener("click", () => {
+        airdropSelectedFdv = fdv;
+        Array.from(chipRow.children).forEach((c) => c.classList.remove("is-active"));
+        chip.classList.add("is-active");
+        updateAirdropEstimate();
+      });
+      chipRow.appendChild(chip);
+    });
+  }
+
+  if (!airdropInit) {
+    ["ad-mybags", "ad-totalbags", "ad-poolpct"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", updateAirdropEstimate);
+    });
+    airdropInit = true;
+  }
+  updateAirdropEstimate();
+}
+
+function updateAirdropEstimate() {
+  const myBags = parseInt(document.getElementById("ad-mybags").value, 10);
+  const totalBags = Math.max(1, parseInt(document.getElementById("ad-totalbags").value, 10));
+  const poolPct = parseFloat(document.getElementById("ad-poolpct").value);
+
+  document.getElementById("ad-mybags-out").textContent = myBags.toLocaleString();
+  document.getElementById("ad-totalbags-out").textContent = totalBags.toLocaleString();
+  document.getElementById("ad-poolpct-out").textContent = poolPct + "%";
+
+  const airdropPoolTokens = AIRDROP_MAX_SUPPLY * (poolPct / 100);
+  const yourShare = Math.min(1, myBags / totalBags);
+  const yourTokens = airdropPoolTokens * yourShare;
+  const tokenPrice = airdropSelectedFdv / AIRDROP_MAX_SUPPLY;
+  const yourUsdValue = yourTokens * tokenPrice;
+
+  const breakdown = document.getElementById("ad-breakdown");
+  breakdown.innerHTML = `
+    <div class="breakdown-row"><span>Airdrop pool (${poolPct}% of 1B)</span><span>${Math.round(airdropPoolTokens).toLocaleString()} $CT</span></div>
+    <div class="breakdown-row"><span>Your share of pool</span><span>${(yourShare * 100).toFixed(4)}%</span></div>
+    <div class="breakdown-row"><span>Your estimated $CT</span><span>${Math.round(yourTokens).toLocaleString()} $CT</span></div>
+    <div class="breakdown-row"><span>At ${formatUsd(airdropSelectedFdv)} FDV ($${tokenPrice.toFixed(4)}/token)</span><span>&asymp; ${formatUsdPrecise(yourUsdValue)}</span></div>
+  `;
+}
+
+function formatUsdPrecise(n) {
+  if (typeof n !== "number" || Number.isNaN(n)) return "—";
+  return "$" + n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 /* ============ Tool: Vault Explorer (app.concrete.xyz, unofficial) ============ */
