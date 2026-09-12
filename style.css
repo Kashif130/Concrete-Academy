@@ -629,6 +629,50 @@ body {
   border-top: 1px solid rgba(232,230,225,0.08);
 }
 
+/* ============ Vault Yield Calculator ============ */
+.earnings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 24px 0;
+}
+@media (max-width: 720px) { .earnings-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 460px) { .earnings-grid { grid-template-columns: 1fr; } }
+.earnings-card {
+  background: var(--charcoal);
+  border: 1px solid rgba(232,230,225,0.1);
+  padding: 16px;
+}
+.earnings-card-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; color: var(--aggregate); margin-bottom: 8px; }
+.earnings-card-value { font-family: var(--display); font-size: 19px; color: var(--pass); }
+.earnings-card-highlight { border-color: var(--safety); background: var(--charcoal-2); grid-column: 1 / -1; }
+.earnings-card-highlight .earnings-card-value { color: var(--safety); font-size: 24px; }
+
+/* ============ Vault Optimizer ============ */
+.optimizer-controls { margin-bottom: 20px; }
+.optimizer-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.optimizer-row {
+  display: grid;
+  grid-template-columns: 80px 1.6fr 1fr 1fr;
+  align-items: center;
+  gap: 12px;
+  background: var(--charcoal);
+  border: 1px solid rgba(232,230,225,0.1);
+  padding: 14px 16px;
+}
+@media (max-width: 620px) { .optimizer-row { grid-template-columns: 1fr 1fr; grid-template-areas: "rank rank" "name name" "apy earning"; } }
+.optimizer-row-best { border-color: var(--safety); background: var(--charcoal-2); }
+.optimizer-rank { font-family: var(--mono); font-size: 12px; color: var(--aggregate); }
+.optimizer-row-best .optimizer-rank { color: var(--safety); font-weight: 600; }
+.optimizer-name-main { font-family: var(--display); font-size: 14.5px; color: var(--concrete); }
+.optimizer-name-sub { font-family: var(--mono); font-size: 11px; color: var(--aggregate); margin-top: 2px; }
+.optimizer-apy { font-family: var(--mono); font-size: 13px; color: var(--blueprint); text-align: right; }
+.optimizer-earning { font-family: var(--display); font-size: 15px; color: var(--pass); text-align: right; }
+
+/* ============ Airdrop Allocation Checker ============ */
+.fdv-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.fdv-chip { cursor: pointer; }
+
 /* ============ Vault Explorer ============ */
 .vault-grid {
   display: grid;
